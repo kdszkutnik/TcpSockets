@@ -13,10 +13,17 @@ namespace Project1
         private Socket _socket;
         private byte[] _buffer = new byte[1024];
 
+        public delegate void ServerSocketReceiveEventHandler(object source, ServerSocketEventArgs args);
+        public event ServerSocketReceiveEventHandler ServerSocketReceive;
+
+        public class ServerSocketEventArgs : EventArgs
+        {
+            public String Text { get; set; }
+        }
+
         public ServerSocket()
         {
             _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-
         }
 
         public void Bind(int port)
@@ -50,10 +57,17 @@ namespace Project1
             Array.Copy(_buffer, packet, packet.Length);
 
             // Handle the packet
-            String test = PacketHandler.Handle(packet, clientSocket);
+            String _text = PacketHandler.Handle(packet, clientSocket);
+            OnServerSocketReceive(_text);
 
             _buffer = new byte[1024];
             clientSocket.BeginReceive(_buffer, 0, _buffer.Length, SocketFlags.None, ReceivedCallback, clientSocket);
+        }
+
+        protected virtual void OnServerSocketReceive(String text)
+        {
+            if(ServerSocketReceive != null)
+                ServerSocketReceive(this, new ServerSocketEventArgs { Text = text });
         }
     }
 }

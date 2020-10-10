@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using AForge.Video;
 using AForge.Video.DirectShow;
+using static Project1.ServerSocket;
 
 namespace Project1
 {
@@ -33,7 +34,9 @@ namespace Project1
                 comboBoxCameras.Items.Add(VideoCaptureDevice.Name);
             }
             comboBoxCameras.SelectedIndex = 0;
-            toolStripStatusLabel1.Text = "Prigram is running";
+            toolStripStatusLabel1.Text = "Program is running";
+
+            ServerSocket.ServerSocketReceive += this.toolStripStatusUpdate;
         }
 
         void FinalVideo_NewFrame(object sender, NewFrameEventArgs eventArgs)
@@ -77,6 +80,11 @@ namespace Project1
             ServerSocket.Listen(500);
             ServerSocket.Accept();
             toolStripStatusLabel1.Text = "Server is running";
+        }
+
+        public void toolStripStatusUpdate(Object source, ServerSocketEventArgs args)
+        {
+            toolStripStatusLabel1.Text = "Received Tcp packet: " + args.Text;
         }
     }
 }
