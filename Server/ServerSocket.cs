@@ -11,14 +11,14 @@ namespace Project1
     public class ServerSocket
     {
         private Socket _socket;
-        private byte[] _buffer = new byte[1024];
+        private byte[] _buffer = new byte[30000];
 
         public delegate void ServerSocketReceiveEventHandler(object source, ServerSocketEventArgs args);
         public event ServerSocketReceiveEventHandler ServerSocketReceive;
 
         public class ServerSocketEventArgs : EventArgs
         {
-            public String Text { get; set; }
+            public Byte[] Data { get; set; }
         }
 
         public ServerSocket()
@@ -41,10 +41,15 @@ namespace Project1
             _socket.BeginAccept(AcceptedCallback, null);
         }
 
+        public void Send(String text)
+        {
+            _socket.Send(Encoding.ASCII.GetBytes(text));
+        }
+
         private void AcceptedCallback(IAsyncResult result)
         {
             Socket clientSocket = _socket.EndAccept(result);
-            _buffer = new byte[1024];
+            _buffer = new byte[30000];
             Accept();
             clientSocket.BeginReceive(_buffer, 0, _buffer.Length, SocketFlags.None, ReceivedCallback, clientSocket);
         }
@@ -58,16 +63,16 @@ namespace Project1
 
             // Handle the packet
             String _text = PacketHandler.Handle(packet, clientSocket);
-            OnServerSocketReceive(_text);
+            OnServerSocketReceive(_buffer);
 
-            _buffer = new byte[1024];
+            _buffer = new byte[30000];
             clientSocket.BeginReceive(_buffer, 0, _buffer.Length, SocketFlags.None, ReceivedCallback, clientSocket);
         }
 
-        protected virtual void OnServerSocketReceive(String text)
+        protected virtual void OnServerSocketReceive(Byte[] data)
         {
             if(ServerSocketReceive != null)
-                ServerSocketReceive(this, new ServerSocketEventArgs { Text = text });
+                ServerSocketReceive(this, new ServerSocketEventArgs { Data = data });
         }
     }
 }

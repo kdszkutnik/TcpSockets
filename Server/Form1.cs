@@ -18,59 +18,15 @@ namespace Project1
 {
     public partial class TcpServer : Form
     {
-        private FilterInfoCollection VideoCaptureDevices;
-        private VideoCaptureDevice FinalVideo;
-        private Bitmap video;
-        byte[] bmpBytes;
-
         public static ServerSocket ServerSocket = new ServerSocket();
 
         public TcpServer()
         {
             InitializeComponent();
-            VideoCaptureDevices = new FilterInfoCollection(FilterCategory.VideoInputDevice);
-            foreach (FilterInfo VideoCaptureDevice in VideoCaptureDevices)
-            {
-                comboBoxCameras.Items.Add(VideoCaptureDevice.Name);
-            }
-            comboBoxCameras.SelectedIndex = 0;
+            
             toolStripStatusLabel1.Text = "Program is running";
 
-            ServerSocket.ServerSocketReceive += this.toolStripStatusUpdate;
-        }
-
-        void FinalVideo_NewFrame(object sender, NewFrameEventArgs eventArgs)
-        {
-            video = (Bitmap)eventArgs.Frame.Clone();
-        }
-
-        private void buttonStart_Click(object sender, EventArgs e)
-        {
-            FinalVideo = new VideoCaptureDevice(VideoCaptureDevices[comboBoxCameras.SelectedIndex].MonikerString);
-            FinalVideo.NewFrame += new NewFrameEventHandler(FinalVideo_NewFrame);
-            FinalVideo.Start();
-        }
-
-        private void buttonStop_Click(object sender, EventArgs e)
-        {
-            FinalVideo.Stop();
-        }
-
-        private void buttonTakePicture_Click(object sender, EventArgs e)
-        {
-            pictureBoxVideo1.Image = video;
-            Bitmap bmp = new Bitmap(video);
-            MemoryStream ms = new MemoryStream();
-            bmp.Save(ms, System.Drawing.Imaging.ImageFormat.Jpeg);
-            bmpBytes = ms.GetBuffer();
-            ms.Close();
-        }
-
-        private void buttonReceiveImage_Click(object sender, EventArgs e)
-        {
-            ImageConverter convertData = new ImageConverter();
-            Image image = (Image)convertData.ConvertFrom(bmpBytes);
-            pictureBoxVideo2.Image = image;
+            ServerSocket.ServerSocketReceive += this.ServerSocketDataReceive;
         }
 
         private void buttonServerTcp_Click(object sender, EventArgs e)
@@ -82,9 +38,10 @@ namespace Project1
             toolStripStatusLabel1.Text = "Server is running";
         }
 
-        public void toolStripStatusUpdate(Object source, ServerSocketEventArgs args)
+        public void ServerSocketDataReceive(Object source, ServerSocketEventArgs args)
         {
-            toolStripStatusLabel1.Text = "Received Tcp packet: " + args.Text;
+            var ms = new MemoryStream(args.Data);
+            pictureBoxVideo1.Image = Image.FromStream(ms);
         }
     }
 }
